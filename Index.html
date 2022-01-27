@@ -1,0 +1,178 @@
+<head>
+    Сапер
+</head>
+<body>
+    <div id="field"></div>
+</body>
+<style>
+    .row {
+        display: flex;
+    }
+
+    .cell {
+        width: 20px;
+        height: 20px;
+        border: 1px solid #686868;
+        margin: 1px;
+        display: inline-block;
+        cursor: pointer;
+        text-align: center;
+    }
+
+        .cell > div {
+           display: none;
+        }
+
+        .cell.open > div {
+            display: block;
+        }
+
+    .mine {
+        margin: 2px;
+        background: darkred;
+        height: 16px;
+    }
+
+    .number {
+        margin: 2px;
+        background: #b6b6b6;
+        height: 16px;
+    }
+
+    .number-1 {
+        color: blue;
+    }
+
+    .number-2 {
+        color: green;
+    }
+
+    .number-3 {
+        color: red;
+    }
+
+    .number-4 {
+        color: darkblue;
+    }
+
+    .number-5 {
+        color: darkred;
+    }
+
+    .number-6 {
+        color: lightseagreen;
+    }
+
+    .number-7 {
+        color: black;
+    }
+
+    .number-8 {
+        color: lightgray;
+    }
+</style>
+<script src="vanilla.js"></script>
+<script>
+    let game = {
+        height: 10,
+        width: 10,
+        mineCount: 10,
+        field: null,
+    }
+    document.addEventListener("DOMContentLoaded", function () {
+        SetField();
+        DrawField();
+    });
+
+    function SetField() {
+        game.field = [];
+        let cellInLines = [];
+        for (let i = 0; i < game.width; i++) {
+            game.field[i] = [];
+            for (let j = 0; j < game.height; j++) {
+                let cell = { isMine: false, isOpen: false, number: 0 };
+                game.field[i][j] = cell;
+                cellInLines.push(cell);
+            }
+        }
+
+        let cellCount = cellInLines.length;
+        if (cellCount < game.mineCount) {
+            throw 'troubles: stoka min ne vlezet';
+        }
+
+        for (let i = 0; i < game.mineCount; i++) {
+            let index = getRandomInt(cellCount);
+            cellInLines[index].isMine = true;
+            cellInLines.slice(index, index + 1);
+            cellCount--;
+        }
+
+        for (let i = 0; i < game.width; i++) {
+            for (let j = 0; j < game.height; j++) {
+                if (game.field[i][j].isMine) {
+                    if (i > 0 && j > 0) {
+                        game.field[i - 1][j - 1].number++;
+                    }
+                    if (i > 0) {
+                        game.field[i - 1][j].number++;
+                    }
+                    if (i > 0 && j < game.height - 1) {
+                        game.field[i - 1][j + 1].number++;
+                    }
+                    if (j > 0) {
+                        game.field[i][j - 1].number++;
+                    }
+                    if (j < game.height - 1) {
+                        game.field[i][j + 1].number++;
+                    }
+                    if (i < game.width - 1 && j > 0) {
+                        game.field[i + 1][j - 1].number++;
+                    }
+                    if (i < game.width - 1) {
+                        game.field[i + 1][j].number++;
+                    }
+                    if (i < game.width - 1 && j < game.height - 1) {
+                        game.field[i + 1][j + 1].number++;
+                    }
+                }
+            }
+        }
+        return field;
+    }
+
+    function DrawField() {
+        let fieldDiv = document.getElementById('field');
+        fieldDiv.innerHTML = null;
+        for (let i = 0; i < game.width; i++) {
+            let rowDiv = document.createElement('div');
+            rowDiv.classList.add('row');
+            fieldDiv.appendChild(rowDiv);
+            for (let j = 0; j < game.height; j++) {
+                let cellDiv = document.createElement('div');
+                cellDiv.classList.add('cell');
+                cellDiv.onclick = function () {
+                    cellDiv.classList.add('open');
+                };
+                if (game.field[i][j].isMine) {
+                    let mineDiv = document.createElement('div');
+                    mineDiv.classList.add('mine');
+                    cellDiv.appendChild(mineDiv)
+                } else {
+                    let numberDiv = document.createElement('div');
+                    let num = game.field[i][j].number;
+                    if (num > 0) {
+                        numberDiv.classList.add('number-' + num);
+                        numberDiv.innerHTML = num;
+                    }
+                    cellDiv.appendChild(numberDiv)
+                }
+                rowDiv.appendChild(cellDiv);
+            }
+        }
+    }
+
+    function getRandomInt(max) {
+        return Math.floor(Math.random() * max);
+    }
+</script>
