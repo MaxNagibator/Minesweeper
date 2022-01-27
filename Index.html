@@ -20,7 +20,7 @@
     }
 
         .cell > div {
-           display: none;
+            display: none;
         }
 
         .cell.open > div {
@@ -34,9 +34,8 @@
     }
 
     .number {
-        margin: 2px;
         background: #b6b6b6;
-        height: 16px;
+        height: 20px;
     }
 
     .number-1 {
@@ -82,7 +81,17 @@
     document.addEventListener("DOMContentLoaded", function () {
         SetField();
         DrawField();
+
+        document.getElementsByClassName('cell').onclick = cellClick;
     });
+
+    document.addEventListener('click', function (event) {
+        if (!event.target.matches('.cell')) {
+            return;
+        }
+       
+        cellClick(event.target);
+    }, false);
 
     function SetField() {
         game.field = [];
@@ -90,7 +99,7 @@
         for (let i = 0; i < game.width; i++) {
             game.field[i] = [];
             for (let j = 0; j < game.height; j++) {
-                let cell = { isMine: false, isOpen: false, number: 0 };
+                let cell = { isMine: false, isOpen: false, number: 0, x: i, y: j };
                 game.field[i][j] = cell;
                 cellInLines.push(cell);
             }
@@ -111,34 +120,44 @@
         for (let i = 0; i < game.width; i++) {
             for (let j = 0; j < game.height; j++) {
                 if (game.field[i][j].isMine) {
-                    if (i > 0 && j > 0) {
-                        game.field[i - 1][j - 1].number++;
-                    }
-                    if (i > 0) {
-                        game.field[i - 1][j].number++;
-                    }
-                    if (i > 0 && j < game.height - 1) {
-                        game.field[i - 1][j + 1].number++;
-                    }
-                    if (j > 0) {
-                        game.field[i][j - 1].number++;
-                    }
-                    if (j < game.height - 1) {
-                        game.field[i][j + 1].number++;
-                    }
-                    if (i < game.width - 1 && j > 0) {
-                        game.field[i + 1][j - 1].number++;
-                    }
-                    if (i < game.width - 1) {
-                        game.field[i + 1][j].number++;
-                    }
-                    if (i < game.width - 1 && j < game.height - 1) {
-                        game.field[i + 1][j + 1].number++;
+                    let cellsForUp = getNeighbours(i, j);
+                    for (let i2 = 0; i2 < cellsForUp.length; i2++) {
+                        cellsForUp[i2].number++;
                     }
                 }
             }
         }
+
         return field;
+    }
+
+    function getNeighbours(i, j) {
+        let array = [];
+        if (i > 0 && j > 0) {
+            array.push(game.field[i - 1][j - 1]);
+        }
+        if (i > 0) {
+            array.push(game.field[i - 1][j]);
+        }
+        if (i > 0 && j < game.height - 1) {
+            array.push(game.field[i - 1][j + 1]);
+        }
+        if (j > 0) {
+            array.push(game.field[i][j - 1]);
+        }
+        if (j < game.height - 1) {
+            array.push(game.field[i][j + 1]);
+        }
+        if (i < game.width - 1 && j > 0) {
+            array.push(game.field[i + 1][j - 1]);
+        }
+        if (i < game.width - 1) {
+            array.push(game.field[i + 1][j]);
+        }
+        if (i < game.width - 1 && j < game.height - 1) {
+            array.push(game.field[i + 1][j + 1]);
+        }
+        return array;
     }
 
     function DrawField() {
@@ -149,25 +168,59 @@
             rowDiv.classList.add('row');
             fieldDiv.appendChild(rowDiv);
             for (let j = 0; j < game.height; j++) {
+                let cell = game.field[i][j];
                 let cellDiv = document.createElement('div');
                 cellDiv.classList.add('cell');
-                cellDiv.onclick = function () {
-                    cellDiv.classList.add('open');
-                };
-                if (game.field[i][j].isMine) {
+                cellDiv.id = getCellId(cell.x, cell.y);;
+                cellDiv.dataset.x = cell.x;
+                cellDiv.dataset.y = cell.y;
+                if (cell.isMine) {
                     let mineDiv = document.createElement('div');
                     mineDiv.classList.add('mine');
-                    cellDiv.appendChild(mineDiv)
+                    cellDiv.appendChild(mineDiv);
                 } else {
                     let numberDiv = document.createElement('div');
-                    let num = game.field[i][j].number;
+                    let num = cell.number;
                     if (num > 0) {
                         numberDiv.classList.add('number-' + num);
                         numberDiv.innerHTML = num;
                     }
+                    numberDiv.classList.add('number');
                     cellDiv.appendChild(numberDiv)
                 }
                 rowDiv.appendChild(cellDiv);
+            }
+        }
+    }
+
+    function getCellId(x, y) {
+        return 'cell-' + x + '-' + y;
+    }
+
+    function cellClick(elem) {
+        if (game.state) {
+            alert(game.state);
+            return;
+        }
+
+        elem.classList.add('open');
+        let x = Number(elem.dataset.x);
+        let y = Number(elem.dataset.y);
+        let cell = game.field[x][y];
+        if (cell.isMine) {
+            game.state = 'loose';
+            cellClick(elem);
+            return;
+        } else {
+            if (cell.number == 0) {
+                let cellsForClick = getNeighbours(x, y);
+                for (let i = 0; i < cellsForClick.length; i++) {
+                    let id = getCellId(cellsForClick[i].x, cellsForClick[i].y);
+                    let cellDivForClick = document.getElementById(id);
+                    if (!cellDivForClick.classList.contains('open')) {
+                        cellClick(cellDivForClick);
+                    }
+                }
             }
         }
     }
